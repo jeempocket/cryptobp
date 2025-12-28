@@ -168,7 +168,7 @@
         }
 
         const url = (state.txUrl || "").trim();
-        txLink.setAttribute("href", url.length ? url : "#");
+        txLink.setAttribute("href", url.length ? url : "https://t.me/tribute/app?startapp=sGlp");
     }
 
     function fillForm(state) {
