@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Получены средства</title>
+
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<main class="app">
+    <div class="content">
+        <!-- Верхний блок -->
+        <section class="receipt" aria-label="Получены средства">
+            <div class="receipt__icon" aria-hidden="true">
+                <img class="receipt__icon-img" src="assets/icons/Vector.svg" alt="" />
+            </div>
+
+            <h1 class="receipt__title" id="titleText">Получены средства</h1>
+            <div class="receipt__amount" id="amountText">+97.31 USDT</div>
+            <div class="receipt__fiat" id="fiatText">7 683.55 ₽</div>
+        </section>
+
+        <div class="divider" role="separator" aria-hidden="true"></div>
+
+        <!-- Информация о транзакции -->
+        <section class="tx-section" aria-label="Информация о транзакции">
+            <h2 class="section-title">Информация о транзакции</h2>
+
+            <div class="tx-card" role="table" aria-label="Детали транзакции">
+                <div class="tx-row" role="row">
+                    <div class="tx-row__label" role="cell">Дата</div>
+                    <div class="tx-row__value" role="cell" id="dateText">16 декабря в 23:32</div>
+                </div>
+
+                <div class="tx-row" role="row">
+                    <div class="tx-row__label" role="cell">Сеть</div>
+                    <div class="tx-row__value tx-row__value--inline" role="cell">
+              <span class="network">
+                <img class="network__icon" src="assets/icons/Trx.svg" alt="TRON" />
+                <span class="network__name" id="networkText">TRON</span>
+              </span>
+                    </div>
+                </div>
+
+                <div class="tx-row" role="row">
+                    <div class="tx-row__label" role="cell">Транзакция</div>
+                    <div class="tx-row__value" role="cell">
+                        <a class="tx-hash" id="txLink" href="#" target="_blank" rel="noopener noreferrer">
+                            <span class="tx-hash__text" id="txHashText">0fe99ba...4c9a8</span>
+                            <span class="tx-hash__icon" aria-hidden="true">↗</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Нижняя панель -->
+    <footer class="bottom-bar">
+        <button class="bottom-bar__btn" type="button" id="backBtn">Назад</button>
+    </footer>
+</main>
+
+<!-- POPUP / EDITOR -->
+<div id="editorOverlay" hidden aria-hidden="true">
+    <div id="editorModal" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
+        <div id="editorHeader">
+            <div>
+                <div id="editorTitle">Редактирование</div>
+                <div id="editorSubtitle">Впиши значения и нажми «Применить»</div>
+            </div>
+            <button type="button" id="editorClose" aria-label="Закрыть">✕</button>
+        </div>
+
+        <form id="editorForm" autocomplete="off">
+            <div class="field">
+                <label class="label" for="fTitle">Заголовок</label>
+                <input id="fTitle" class="input" placeholder="Получены средства" />
+            </div>
+
+            <div class="field">
+                <label class="label">Сумма (USDT)</label>
+                <div class="row">
+                    <select id="fSign" class="input select">
+                        <option value="+">+</option>
+                        <option value="-">-</option>
+                    </select>
+
+                    <input id="fAmount" class="input" inputmode="decimal" placeholder="97.31" />
+                    <input id="fCurrency" class="input" value="USDT" />
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="label">Сумма (₽)</label>
+                <div class="row">
+                    <input id="fFiat" class="input" inputmode="decimal" placeholder="7683.55" />
+                    <div class="suffix">₽</div>
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="label">Дата и время</label>
+                <div class="row">
+                    <input id="fDate" class="input" type="date" />
+                    <input id="fTime" class="input" type="time" />
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="label" for="fNetwork">Сеть</label>
+                <input id="fNetwork" class="input" value="TRON" />
+            </div>
+
+            <div class="field">
+                <label class="label" for="fTxText">Tx (как отображать)</label>
+                <input id="fTxText" class="input" placeholder="0fe99ba...4c9a8" />
+            </div>
+
+            <div class="field">
+                <label class="label" for="fTxUrl">Ссылка на Tx (куда ведёт)</label>
+                <input id="fTxUrl" class="input" placeholder="https://..." />
+            </div>
+
+            <div id="editorActions">
+                <button type="button" id="realBackBtn" class="btn ghost">Вернуться назад</button>
+                <button type="button" id="resetBtn" class="btn ghost">Сброс</button>
+                <button type="submit" class="btn primary">Применить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Стили только для попапа (твой css/style.css не трогаем) -->
+<style>
+    #editorOverlay[hidden]{ display:none !important; }
+
+    #editorOverlay{
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.55);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding: 14px 12px calc(14px + env(safe-area-inset-bottom));
+        z-index: 9999;
+    }
+
+    #editorModal{
+        width: min(560px, 100%);
+        background: #1C1C1C;
+        border: 1px solid rgba(255,255,255,.10);
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0,0,0,.55);
+    }
+
+    #editorHeader{
+        display:flex;
+        align-items:flex-start;
+        justify-content:space-between;
+        padding: 14px 14px 10px;
+        border-bottom: 1px solid rgba(255,255,255,.08);
+        background: #222222;
+    }
+
+    #editorTitle{
+        font-size: 16px;
+        font-weight: 700;
+        color: rgba(255,255,255,.92);
+    }
+
+    #editorSubtitle{
+        margin-top: 4px;
+        font-size: 12px;
+        color: rgba(255,255,255,.45);
+    }
+
+    #editorClose{
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: rgba(255,255,255,.08);
+        color: rgba(255,255,255,.90);
+        display:grid;
+        place-items:center;
+    }
+
+    #editorForm{ padding: 14px; }
+
+    .field{ margin-bottom: 12px; }
+
+    .label{
+        display:block;
+        font-size: 12px;
+        margin-bottom: 6px;
+        color: rgba(255,255,255,.55);
+    }
+
+    .row{
+        display:flex;
+        gap: 8px;
+        align-items:center;
+    }
+
+    .input{
+        flex: 1;
+        height: 42px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,.10);
+        background: #151515;
+        color: rgba(255,255,255,.92);
+        padding: 0 12px;
+        outline: none;
+        min-width: 0;
+    }
+
+    .input.select{
+        flex: 0 0 64px;
+        padding: 0 10px;
+    }
+
+    .suffix{
+        height: 42px;
+        padding: 0 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,.10);
+        background: #151515;
+        display:flex;
+        align-items:center;
+        color: rgba(255,255,255,.55);
+    }
+
+    #editorActions{
+        display:flex;
+        gap: 8px;
+        justify-content: space-between;
+        padding-top: 10px;
+    }
+
+    .btn{
+        height: 44px;
+        border-radius: 12px;
+        padding: 0 12px;
+        font-weight: 600;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border: 1px solid rgba(255,255,255,.10);
+        color: rgba(255,255,255,.92);
+        background: rgba(255,255,255,.06);
+        flex: 1;
+        user-select: none;
+    }
+
+    .btn.primary{
+        background: #97d66f;
+        color: #fff;
+        border-color: transparent;
+    }
+
+    .btn.ghost{
+        background: rgba(255,255,255,.06);
+    }
+</style>
+
+<script src="js/app.js"></script>
+</body>
+</html>

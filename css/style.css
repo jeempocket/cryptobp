@@ -1,0 +1,275 @@
+/* css/style.css */
+
+/* ---------- Base / Reset ---------- */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #1f1f1f;
+    color: #f2f2f2;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+img { display: block; max-width: 100%; }
+button { font: inherit; border: 0; background: none; padding: 0; }
+
+/* ---------- Layout ---------- */
+:root{
+    --bg: #1f1f1f;
+    --text: #f2f2f2;
+    --muted: rgba(242,242,242,.55);
+    --muted2: rgba(242,242,242,.35);
+    --divider: rgba(255,255,255,.08);
+
+    --card-bg: rgba(0,0,0,.20);
+    --card-border: rgba(255,255,255,.10);
+    --card-line: rgba(255,255,255,.10);
+
+    --accent: #4fb06c;
+    --btn: #97d66f;
+    --btn-text: #ffffff;
+
+    --radius-lg: 18px;
+    --radius-xl: 15px;
+}
+
+.app{
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+}
+
+/* верхняя часть, чтобы низ занял bottom-bar */
+.content{
+    flex: 1;
+    padding: 10px 18px 18px;
+    background: #1C1C1C;
+    position: relative;
+}
+
+.content::before{
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 252px;
+    background: #222222;
+    z-index: 0;
+}
+
+.content > *{
+    position: relative;
+    z-index: 1;
+}
+
+/* ---------- Receipt (верхняя зона до линии) ---------- */
+.receipt{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding-top: 18px;
+    background: transparent;
+    margin: 0;
+    width: 100%;
+}
+
+.receipt__icon{
+    width: 86px;
+    height: 86px;
+    border-radius: 999px;
+    background: transparent;
+    display: grid;
+    place-items: center;
+    margin-bottom: 16px;
+}
+
+.receipt__icon-img{
+    width: 86px;
+    height: 86px;
+}
+
+.receipt__title{
+    margin: 0;
+    font-weight: 500;
+    font-size: 17px;
+    line-height: 1.15;
+    color: rgba(255,255,255,.92);
+}
+
+.receipt__amount{
+    margin-top: 14px;
+    font-weight: 600;
+    font-size: 27px;
+    line-height: 1;
+    letter-spacing: 0.2px;
+    color: #4fb06c;
+}
+
+.receipt__fiat{
+    margin-top: 14px;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.1;
+    color: rgba(255,255,255,.38);
+}
+
+/* ---------- Divider ---------- */
+.divider{
+    height: 2px;
+    background: rgba(255,255,255,.07);
+    margin: 30px -18px 30px; /* 30 вверх и 30 вниз */
+}
+
+/* ---------- Transaction section ---------- */
+.tx-section{
+    padding-top: 2px;
+}
+
+.section-title{
+    margin: 0 0 12px;
+    font-weight: 500;
+    font-size: 17px;
+    line-height: 1.2;
+    color: rgba(242,242,242,.55);
+}
+
+/* ---------- TX table (итоговый вид) ---------- */
+.tx-card{
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.10);
+    background: transparent; /* фон задаём колонками */
+}
+
+.tx-row{
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    min-height: 42px;
+}
+
+.tx-row + .tx-row{
+    border-top: 1px solid rgba(255,255,255,.09);
+}
+
+.tx-row__label{
+    background: #222222;
+    border-right: 1px solid rgba(255,255,255,.09);
+
+    padding: 14px 12px;
+    font-size: 16px;
+    font-weight: 500;
+    color: rgba(255,255,255,.40);
+
+    display: flex;
+    align-items: center;
+}
+
+.tx-row__value{
+    background: #1C1C1C;
+
+    padding: 14px 12px;
+    font-size: 16px;
+    font-weight: 600;
+    color: rgba(255,255,255,.92);
+
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+/* TRON */
+.network{
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.network__icon{
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    transform: translateY(1px);
+}
+
+.network__name{
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    line-height: 1;
+}
+
+/* hash */
+.tx-hash{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: #7CDA74;
+    font-weight: 500;
+}
+
+.tx-hash:active{
+    opacity: .75;
+}
+
+.tx-hash__icon{
+    color: #84AF59;
+    font-size: 14px;
+    line-height: 1;
+    transform: translateY(-1px);
+}
+
+/* ---------- Bottom bar (как в рефе: линия + safe-area) ---------- */
+.bottom-bar{
+    position: relative;
+    background: #1C1C1C;
+
+    /* кнопка выше от низа + учёт home-indicator */
+    padding: 18px 18px calc(40px + env(safe-area-inset-bottom));
+}
+
+/* разделительная полоса над кнопкой */
+.bottom-bar::before{
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 1px;
+    background: rgba(255,255,255,.07);
+}
+
+.bottom-bar__btn{
+    width: 100%;
+    height: 60px;
+    border-radius: var(--radius-xl);
+    background: var(--btn);
+    color: var(--btn-text);
+    font-weight: 600;
+    font-size: 21px;
+    letter-spacing: 0.2px;
+
+    display: grid;
+    place-items: center;
+
+    box-shadow: 0 10px 20px rgba(0,0,0,.25);
+}
+
+.bottom-bar__btn:active{
+    transform: translateY(1px);
+    opacity: .95;
+}
+
+/* ---------- Small screens tweaks ---------- */
+@media (max-width: 360px){
+    .receipt__amount{ font-size: 36px; }
+    .receipt__fiat{ font-size: 22px; }
+    .tx-row{ grid-template-columns: 110px 1fr; }
+}
