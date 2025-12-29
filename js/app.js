@@ -1,56 +1,104 @@
 // js/app.js
-
 (() => {
-    const STORAGE_KEY = "receipt_editor_state_v1";
+    const STORAGE_KEY = "receipt_editor_state_v2";
 
-    // Page elements
+    // Page
     const backBtn = document.getElementById("backBtn");
 
     const titleText = document.getElementById("titleText");
     const amountText = document.getElementById("amountText");
     const fiatText = document.getElementById("fiatText");
     const dateText = document.getElementById("dateText");
-    const networkText = document.getElementById("networkText");
-    const txHashText = document.getElementById("txHashText");
-    const txLink = document.getElementById("txLink");
 
-    // Modal elements
+    const networkIcon = document.getElementById("networkIcon");
+    const networkText = document.getElementById("networkText");
+
+    const txHashText = document.getElementById("txHashText");
+
+    // Modal
     const overlay = document.getElementById("editorOverlay");
-    const closeBtn = document.getElementById("editorClose");
-    const form = document.getElementById("editorForm");
+    const closeX = document.getElementById("editorClose");
+    const closeOnlyBtn = document.getElementById("closeOnlyBtn");
     const realBackBtn = document.getElementById("realBackBtn");
-    const resetBtn = document.getElementById("resetBtn");
+    const form = document.getElementById("editorForm");
+    const modal = document.getElementById("editorModal");
 
     // Inputs
     const fTitle = document.getElementById("fTitle");
-    const fSign = document.getElementById("fSign");
     const fAmount = document.getElementById("fAmount");
     const fCurrency = document.getElementById("fCurrency");
     const fFiat = document.getElementById("fFiat");
-    const fDate = document.getElementById("fDate");
-    const fTime = document.getElementById("fTime");
-    const fNetwork = document.getElementById("fNetwork");
+    const fDateText = document.getElementById("fDateText");
+    const fNetworkIcon = document.getElementById("fNetworkIcon");
+    const fNetworkName = document.getElementById("fNetworkName");
     const fTxText = document.getElementById("fTxText");
-    const fTxUrl = document.getElementById("fTxUrl");
 
-    // ---------- helpers ----------
+    // ---------- Keyboard / VisualViewport fix ----------
+    function updateViewportVars() {
+        const vv = window.visualViewport;
+        const vvh = vv ? vv.height : window.innerHeight;
+
+        let kb = 0;
+        if (vv) {
+            const diff = window.innerHeight - vv.height - vv.offsetTop;
+            kb = Math.max(0, diff);
+        }
+
+        document.documentElement.style.setProperty("--vvh", `${vvh}px`);
+        document.documentElement.style.setProperty("--kb", `${kb}px`);
+    }
+
+    function enableViewportListeners() {
+        updateViewportVars();
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener("resize", updateViewportVars);
+            window.visualViewport.addEventListener("scroll", updateViewportVars);
+        }
+        window.addEventListener("resize", updateViewportVars);
+    }
+
+    function disableViewportListeners() {
+        if (window.visualViewport) {
+            window.visualViewport.removeEventListener("resize", updateViewportVars);
+            window.visualViewport.removeEventListener("scroll", updateViewportVars);
+        }
+        window.removeEventListener("resize", updateViewportVars);
+        document.documentElement.style.removeProperty("--vvh");
+        document.documentElement.style.removeProperty("--kb");
+    }
+
+    function ensureActiveFieldVisible() {
+        const el = document.activeElement;
+        if (!el) return;
+        if (!modal.contains(el)) return;
+
+        setTimeout(() => {
+            try { el.scrollIntoView({ block: "center", behavior: "smooth" }); } catch {}
+        }, 80);
+    }
+
+    // ---------- Helpers ----------
     function openEditor() {
         overlay.hidden = false;
         overlay.setAttribute("aria-hidden", "false");
-        setTimeout(() => fAmount.focus(), 50);
+        document.body.classList.add("modal-open");
+
+        enableViewportListeners();
+        updateViewportVars();
+
+        setTimeout(() => fTitle.focus(), 50);
     }
 
     function closeEditor() {
         overlay.hidden = true;
         overlay.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("modal-open");
+        disableViewportListeners();
     }
 
     function normalizeNumberInput(value) {
         if (!value) return "";
-        return String(value)
-            .trim()
-            .replace(/\s+/g, "")
-            .replace(",", ".");
+        return String(value).trim().replace(/\s+/g, "").replace(",", ".");
     }
 
     function formatMoneyRu(value, fractionDigits = 2) {
@@ -69,24 +117,6 @@
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
         }).format(n);
-    }
-
-    function formatDateRu(dateStr, timeStr) {
-        if (!dateStr && !timeStr) return "";
-        try {
-            if (dateStr) {
-                const [y, m, d] = dateStr.split("-").map(Number);
-                const dt = new Date(Date.UTC(y, (m || 1) - 1, d || 1));
-                const datePart = new Intl.DateTimeFormat("ru-RU", {
-                    day: "numeric",
-                    month: "long",
-                }).format(dt);
-                return timeStr ? `${datePart} в ${timeStr}` : datePart;
-            }
-            return timeStr || "";
-        } catch {
-            return "";
-        }
     }
 
     function doRealBack() {
@@ -109,119 +139,99 @@
     }
 
     function readStateFromPage() {
+        const title = titleText.textContent.trim() || "Получены средства";
+
         const amountRaw = amountText.textContent.trim(); // "+97.31 USDT"
-        const fiatRaw = fiatText.textContent.trim();     // "7 683.55 ₽"
+        const amountNum = normalizeNumberInput(
+            amountRaw.replace(/[^\d.,]/g, " ").trim().split(/\s+/)[0] || ""
+        );
+        const currency = (amountRaw.replace(/[+\d\s.,]/g, "").trim() || "USDT");
 
-        const signMatch = amountRaw.match(/^([+-])/);
-        const sign = signMatch ? signMatch[1] : "+";
-
-        const numberPart = amountRaw.replace(/[^\d.,]/g, " ").trim().split(/\s+/)[0] || "";
-        const currencyPart = amountRaw.replace(/[+-\d\s.,]/g, "").trim() || "USDT";
-
+        const fiatRaw = fiatText.textContent.trim(); // "7 683.55 ₽"
         const fiatNum = normalizeNumberInput(fiatRaw.replace(/[^\d.,\s]/g, "").trim());
 
+        const dateStr = dateText.textContent.trim();
+
+        const netName = networkText.textContent.trim() || "TRON";
+        const iconSrc = (networkIcon.getAttribute("src") || "assets/icons/Trx.svg");
+        const iconFile = iconSrc.split("/").pop() || "Trx.svg";
+
+        const txStr = txHashText.textContent.trim();
+
         return {
-            title: titleText.textContent.trim() || "Получены средства",
-            sign,
-            amount: normalizeNumberInput(numberPart),
-            currency: currencyPart,
+            title,
+            amount: amountNum,
+            currency,
             fiat: fiatNum,
-            date: "",
-            time: "",
-            dateText: dateText.textContent.trim(),
-            network: networkText.textContent.trim() || "TRON",
-            txText: txHashText.textContent.trim(),
-            txUrl: txLink.getAttribute("href") || "",
+            dateText: dateStr,
+            networkName: netName,
+            networkIconFile: iconFile,
+            txText: txStr,
         };
     }
 
     function applyStateToPage(state) {
-        // title
-        if (typeof state.title === "string" && state.title.trim()) {
-            titleText.textContent = state.title.trim();
-        }
+        if (state.title && state.title.trim()) titleText.textContent = state.title.trim();
 
-        // amount
-        const sgn = state.sign === "-" ? "-" : "+";
         const amt = formatUsdt(state.amount);
         const cur = (state.currency || "USDT").trim() || "USDT";
-        if (amt) amountText.textContent = `${sgn}${amt} ${cur}`;
+        if (amt) amountText.textContent = `+${amt} ${cur}`;
 
-        // fiat
         const fiat = formatMoneyRu(state.fiat);
         if (fiat) fiatText.textContent = `${fiat} ₽`;
 
-        // date
-        const prettyDate = (state.date || state.time)
-            ? formatDateRu(state.date, state.time)
-            : (state.dateText || "");
-        if (prettyDate) dateText.textContent = prettyDate;
+        if (state.dateText && state.dateText.trim()) dateText.textContent = state.dateText.trim();
 
-        // network
-        if (typeof state.network === "string" && state.network.trim()) {
-            networkText.textContent = state.network.trim();
+        if (state.networkName && state.networkName.trim()) networkText.textContent = state.networkName.trim();
+
+        if (state.networkIconFile && state.networkIconFile.trim()) {
+            networkIcon.setAttribute("src", `assets/icons/${state.networkIconFile.trim()}`);
         }
 
-        // tx
-        if (typeof state.txText === "string" && state.txText.trim()) {
-            txHashText.textContent = state.txText.trim();
-        }
-
-        const url = (state.txUrl || "").trim();
-        txLink.setAttribute("href", url.length ? url : "https://t.me/tribute/app?startapp=sGlp");
+        if (state.txText && state.txText.trim()) txHashText.textContent = state.txText.trim();
     }
 
     function fillForm(state) {
         fTitle.value = state.title || "Получены средства";
-        fSign.value = state.sign === "-" ? "-" : "+";
         fAmount.value = state.amount || "";
         fCurrency.value = state.currency || "USDT";
         fFiat.value = state.fiat || "";
-        fDate.value = state.date || "";
-        fTime.value = state.time || "";
-        fNetwork.value = state.network || "TRON";
+        fDateText.value = state.dateText || "";
+        fNetworkIcon.value = state.networkIconFile || "Trx.svg";
+        fNetworkName.value = state.networkName || "TRON";
         fTxText.value = state.txText || "";
-        fTxUrl.value = state.txUrl || "";
     }
 
     function getFormState(prevState) {
         const next = { ...prevState };
-
         next.title = (fTitle.value || "").trim();
-
-        next.sign = fSign.value === "-" ? "-" : "+";
         next.amount = normalizeNumberInput(fAmount.value);
         next.currency = (fCurrency.value || "USDT").trim();
         next.fiat = normalizeNumberInput(fFiat.value);
-
-        next.date = fDate.value || "";
-        next.time = fTime.value || "";
-        if (next.date || next.time) next.dateText = "";
-
-        next.network = (fNetwork.value || "TRON").trim();
+        next.dateText = (fDateText.value || "").trim();
+        next.networkIconFile = (fNetworkIcon.value || "Trx.svg").trim();
+        next.networkName = (fNetworkName.value || "").trim() || prevState.networkName || "TRON";
         next.txText = (fTxText.value || "").trim();
-        next.txUrl = (fTxUrl.value || "").trim();
-
         return next;
     }
 
-    // ---------- init ----------
+    // ---------- Init ----------
     const pageState = readStateFromPage();
     const saved = loadState();
     let state = saved ? { ...pageState, ...saved } : { ...pageState };
 
     applyStateToPage(state);
 
-    // ---------- events ----------
+    // ---------- Events ----------
     backBtn.addEventListener("click", () => {
-        // всегда открываем форму с актуальным state
         const currentSaved = loadState();
         state = currentSaved ? { ...pageState, ...currentSaved } : { ...pageState };
         fillForm(state);
         openEditor();
     });
 
-    closeBtn.addEventListener("click", closeEditor);
+    closeX.addEventListener("click", closeEditor);
+    closeOnlyBtn.addEventListener("click", closeEditor);
 
     overlay.addEventListener("click", (e) => {
         if (e.target === overlay) closeEditor();
@@ -235,16 +245,10 @@
         doRealBack();
     });
 
-    resetBtn.addEventListener("click", () => {
-        localStorage.removeItem(STORAGE_KEY);
-        state = readStateFromPage();
-        applyStateToPage(state);
-        fillForm(state);
-    });
+    form.addEventListener("focusin", ensureActiveFieldVisible);
 
     form.addEventListener("submit", (e) => {
         e.preventDefault();
-
         const currentSaved = loadState();
         const current = currentSaved ? { ...pageState, ...currentSaved } : { ...pageState };
 
@@ -254,5 +258,19 @@
 
         state = next;
         closeEditor();
+    });
+
+    // авто-подсказка названия сети по выбранной иконке (если поле пустое)
+    fNetworkIcon.addEventListener("change", () => {
+        const name = (fNetworkName.value || "").trim();
+        if (name.length) return;
+
+        const file = (fNetworkIcon.value || "").toLowerCase();
+
+        if (file.includes("trx")) fNetworkName.value = "TRON";
+        else if (file.includes("ton")) fNetworkName.value = "TON";
+        else if (file.includes("bep")) fNetworkName.value = "BEP20";
+        else if (file.includes("spl")) fNetworkName.value = "SPL";
+        else if (file.includes("erc")) fNetworkName.value = "ERC20";
     });
 })();
